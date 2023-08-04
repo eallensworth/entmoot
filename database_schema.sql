@@ -1,250 +1,239 @@
-BEGIN TRANSACTION;
 
--- forests Table
-CREATE TABLE IF NOT EXISTS forests(
-	forest				TEXT,
-	PRIMARY KEY(forest)
+-- forests table
+create table if not exists forests(
+	forest				text,
+	primary key (forest)
 );
-INSERT INTO forests
-VALUES ("harmsworth");
+insert into forests
+values ("harmsworth");
 
--- stands Table
-CREATE TABLE IF NOT EXISTS stands(
-	forest				TEXT,
-	stand				TEXT,
-	area				REAL NOT NULL DEFAULT 0.0,
-	estab_yr			INTEGER,
-	estab_mo			INTEGER,
-	estab_dy			INTEGER,
-	proc_flag			INTEGER NOT NULL DEFAULT 1,
-	PRIMARY KEY(forest, stand),
-	FOREIGN KEY(forest) REFERENCES forests(forest)
+-- stands table
+create table if not exists stands(
+	forest				text,
+	stand				text,
+	area				real not null default 0.0,
+	estab_yr			integer,
+	estab_mo			integer,
+	estab_dy			integer,
+	proc_flag			integer not null default 1,
+	primary key(forest, stand),
+	foreign key(forest) references forests(forest) on delete cascade on update cascade
 );
-INSERT INTO stands
-VALUES 
+insert into stands
+values 
 	("harmsworth","blueberry",10,2020,2,22,1),
 	("harmsworth","uno",10,2022,9,15,1);
 
--- cruise_types Table
-CREATE TABLE IF NOT EXISTS cruise_types (
-	cruise_type			TEXT NOT NULL PRIMARY KEY
+-- cruise_types table
+create table if not exists cruise_types (
+	cruise_type			text not null primary key
 );
-INSERT INTO cruise_types
-VALUES ("10th-acre fixed");
+insert into cruise_types
+values ("10th-acre fixed");
 
--- subplots Table
-CREATE TABLE IF NOT EXISTS subplots (
-	cruise_type			TEXT,
-	subplot				TEXT,
-	plot_type			TEXT NOT NULL,
-	plot_size			REAL NOT NULL,
-	dbh_min				REAL NOT NULL,
-	dbh_max				REAL NOT NULL,
-	PRIMARY KEY(cruise_type, subplot),
-	FOREIGN KEY(cruise_type) REFERENCES cruise_types(cruise_type)
+-- subplots table
+create table if not exists subplots (
+	cruise_type			text,
+	subplot				text,
+	plot_type			text not null,
+	plot_size			real not null,
+	dbh_min				real not null,
+	dbh_max				real not null,
+	primary key(cruise_type, subplot),
+	foreign key(cruise_type) references cruise_types(cruise_type)
 );
-INSERT INTO subplots
-VALUES ("10th-acre fixed",1,"fixed_radius",11.85,0,999);
+insert into subplots
+values ("10th-acre fixed",1,"fixed_radius",11.85,0,999);
 	
--- cruises Table
-CREATE TABLE IF NOT EXISTS cruises (
-	forest				TEXT,
-	stand				TEXT,
-	cruise				TEXT,
-	cruise_type			TEXT NOT NULL,
-	cruise_yr			INTEGER,
-	cruise_mo			INTEGER,
-	cruise_dy			INTEGER,
-	age_ht				TEXT,
-	PRIMARY KEY(forest, stand, cruise),
-	FOREIGN KEY(forest) REFERENCES stands(forest),
-	FOREIGN KEY(stand) REFERENCES stands(stand),
-	FOREIGN KEY(cruise_type) REFERENCES cruise_types(cruise_type)
+-- cruises table
+create table if not exists cruises (
+	forest				text,
+	stand				text,
+	cruise				text,
+	cruise_type			text not null,
+	cruise_yr			integer,
+	cruise_mo			integer,
+	cruise_dy			integer,
+	age_ht				text,
+	primary key(forest, stand, cruise),
+	foreign key(forest, stand) references stands(forest, stand) on delete cascade on update cascade,
+	foreign key(cruise_type) references cruise_types(cruise_type) on update cascade
 );
-INSERT INTO cruises
-VALUES
+insert into cruises
+values
 	("harmsworth","blueberry",2023,"10th-acre fixed",2023,8,1,"breast height"),
 	("harmsworth","uno",2023,"10th-acre fixed",2023,8,1,"breast height");
 
--- plots Table
-CREATE TABLE IF NOT EXISTS plots (
-	forest				TEXT,
-	stand				TEXT,
-	cruise				TEXT,
-	plot				INTEGER,
-	PRIMARY KEY(forest, stand, cruise, plot),
-	FOREIGN KEY(forest) REFERENCES forests(forest),
-	FOREIGN KEY(stand) REFERENCES stands(stand),
-	FOREIGN KEY(cruise) REFERENCES cruises(cruise)
+-- plots table
+create table if not exists plots (
+	forest				text,
+	stand				text,
+	cruise				text,
+	plot				integer,
+	primary key(forest, stand, cruise, plot),
+	foreign key(forest, stand, cruise) references cruises(forest, stand, cruise) on delete cascade on update cascade
 );
-INSERT INTO plots
-VALUES
-	("harmsworth","sheena",2023,1),
-	("harmsworth","sheena",2023,2),
-	("harmsworth","elijah",2023,1);
+insert into plots
+values
+	("harmsworth","blueberry",2023,1),
+	("harmsworth","blueberry",2023,2),
+	("harmsworth","uno",2023,1);
 
-CREATE TABLE IF NOT EXISTS trees (
-	forest				TEXT,
-	stand				TEXT,
-	cruise				TEXT,
-	plot				INTEGER,
-	tree				INTEGER,
-	subplot				INTEGER NOT NULL DEFAULT 1,
-	tree_count			REAL NOT NULL DEFAULT 1.0,
-	status				INTEGER NOT NULL DEFAULT 1,
-	species				TEXT NOT NULL,
-	dbh 				REAL NOT NULL ,
-	bh					REAL NOT NULL DEFAULT 4.5,
-	tot_ht				REAL,
-	tot_ht_code			INTEGER NOT NULL DEFAULT 0,
-	crb_ht				REAL,
-	crb_ht_code			INTEGER NOT NULL DEFAULT 0,
-	age					INTEGER,
-	age_code			INTEGER NOT NULL DEFAULT 0,
-	PRIMARY KEY(forest, stand, cruise, plot, tree),
-	FOREIGN KEY(forest) REFERENCES forests(forest),
-	FOREIGN KEY(stand) REFERENCES stands(stand),
-	FOREIGN KEY(subplot) REFERENCES subplots(subplot),
-	FOREIGN KEY(plot) REFERENCES plots(plot)
+create table if not exists trees (
+	forest				text,
+	stand				text,
+	cruise				text,
+	plot				integer,
+	tree				integer,
+	subplot				integer not null default 1,
+	tree_count			real not null default 1.0,
+	status				integer not null default 1,
+	species				text not null,
+	dbh 				real not null ,
+	bh					real not null default 4.5,
+	tot_ht				real,
+	tot_ht_code			integer not null default 0,
+	crb_ht				real,
+	crb_ht_code			integer not null default 0,
+	age					integer,
+	age_code			integer not null default 0,
+	primary key(forest, stand, cruise, plot, tree),
+	foreign key(forest, stand, cruise, plot) references plots(forest, stand, cruise, plot) on delete cascade on update cascade
 );
-INSERT INTO trees
-VALUES
-	("harmsworth","sheena",2023,1,1,1,1,1,202,15.7,4.5,98,1,26,1,NULL,0),
-	("harmsworth","sheena",2023,1,2,1,1,1,202,17.5,4.5,115,1,36,1,NULL,0),
-	("harmsworth","sheena",2023,1,3,1,1,1,261,16.0,4.5,103,1,13,1,NULL,0),
-	("harmsworth","sheena",2023,2,1,1,1,1,202,15.7,4.5,98,1,26,1,NULL,0),
-	("harmsworth","sheena",2023,2,2,1,1,1,202,18.7,4.5,98,1,26,1,NULL,0),
-	("harmsworth","elijah",2023,1,1,1,1,1,202,100,4.5,600,1,26,1,NULL,0);
+insert into trees
+values
+	("harmsworth","blueberry",2023,1,1,1,1,1,202,15.7,4.5,98,1,26,1,null,0),
+	("harmsworth","blueberry",2023,1,2,1,1,1,202,17.5,4.5,115,1,36,1,null,0),
+	("harmsworth","blueberry",2023,1,3,1,1,1,261,16.0,4.5,103,1,13,1,null,0),
+	("harmsworth","blueberry",2023,2,1,1,1,1,202,15.7,4.5,98,1,26,1,null,0),
+	("harmsworth","blueberry",2023,2,2,1,1,1,202,18.7,4.5,98,1,26,1,null,0),
+	("harmsworth","uno",      2023,1,1,1,1,1,202,100,4.5,600,1,26,1,null,0);
 
--- logs Table	
-CREATE TABLE IF NOT EXISTS logs (
-	forest				TEXT NOT NULL,
-	stand				TEXT NOT NULL,
-	cruise				TEXT NOT NULL,
-	plot				INTEGER NOT NULL,
-	tree				INTEGER NOT NULL,
-	segment				INTEGER PRIMARY KEY,
-	ht_btm				REAL NOT NULL,
-	ht_top				REAL NOT NULL,
-	defect				INTEGER,
-	FOREIGN KEY(forest) REFERENCES forests(forest),
-	FOREIGN KEY(stand) REFERENCES stands(stand),
-	FOREIGN KEY(cruise) REFERENCES cruises(cruise),
-	FOREIGN KEY(plot) REFERENCES plots(plot),
-	FOREIGN KEY(tree) REFERENCES trees(tree)
+-- logs table	
+create table if not exists logs (
+	forest				text not null,
+	stand				text not null,
+	cruise				text not null,
+	plot				integer not null,
+	tree				integer not null,
+	segment				integer primary key,
+	ht_btm				real not null,
+	ht_top				real not null,
+	defect				integer,
+	foreign key(forest, stand, cruise, plot, tree) references trees(forest, stand, cruise, plot, tree) on delete cascade on update cascade
 );
 
--- compiler_specs Table
-CREATE TABLE IF NOT EXISTS compiler_specs (
-	spec				TEXT NOT NULL PRIMARY KEY,
-	spec_group			TEXT NOT NULL,
-	spec_value			BLOB NOT NULL
+-- compiler_specs table
+create table if not exists compiler_specs (
+	spec				text not null primary key,
+	spec_group			text not null,
+	spec_value			blob not null
 );
 
--- stands_proc Table
-CREATE TABLE IF NOT EXISTS stands_proc (
-	forest				TEXT, 
-	stand				TEXT,
-	grow_yr				INTEGER,
-	status				TEXT,
-	plots				INTEGER,
-	dom_species			TEXT,
-	codom_species		TEXT,
-	stems				REAL,
-	basal				REAL,
-	qmd					REAL,
-	dom_ht				REAL,
-	ccf					REAL,
-	age					INTEGER,
-	site_index			REAL,
-	vol_cb_gross		REAL,
-	vol_cb_net			REAL,
-	vol_bd_gross		REAL,
-	vol_bd_net			REAL,
-	wt_gross			REAL,
-	wt_net				REAL,
-	biomass_gross		REAL,
-	biomass_net			REAL,
-	carb_bole			REAL,
-	carb_foliage		REAL,
-	carb_branch			REAL,
-	carb_bark			REAL,
-	carb_tree			REAL,
-	carb_root			REAL,
-	defect				REAL
+-- stands_proc table
+create table if not exists stands_proc (
+	forest				text, 
+	stand				text,
+	grow_yr				integer,
+	status				text,
+	plots				integer,
+	dom_species			text,
+	codom_species		text,
+	stems				real,
+	basal				real,
+	qmd					real,
+	dom_ht				real,
+	ccf					real,
+	age					integer,
+	site_index			real,
+	vol_cb_gross		real,
+	vol_cb_net			real,
+	vol_bd_gross		real,
+	vol_bd_net			real,
+	wt_gross			real,
+	wt_net				real,
+	biomass_gross		real,
+	biomass_net			real,
+	carb_bole			real,
+	carb_foliage		real,
+	carb_branch			real,
+	carb_bark			real,
+	carb_tree			real,
+	carb_root			real,
+	defect				real
 );
 
--- cruises_proc Table
-CREATE TABLE IF NOT EXISTS cruises_proc (
-	forest				TEXT, 
-	stand				TEXT,
-	cruise				TEXT
+-- cruises_proc table
+create table if not exists cruises_proc (
+	forest				text, 
+	stand				text,
+	cruise				text
 );
 
--- plots_proc Table
-CREATE TABLE IF NOT EXISTS plots_proc (
-	forest				TEXT, 
-	stand				TEXT,
-	cruise				TEXT
-	plot				INTEGER,
-	grow_yr				INTEGER,
-	status				TEXT,
-	dom_species			TEXT,
-	codom_species		TEXT,
-	stems				REAL,
-	ba					REAL,
-	qmd					REAL,
-	dom_ht				REAL,
-	ccf					REAL,
-	age					INTEGER,
-	site_index			REAL,
-	vol_cb_gross		REAL,
-	vol_cb_net			REAL,
-	vol_bd_gross		REAL,
-	vol_bd_net			REAL,
-	wt_gross			REAL,
-	wt_net				REAL,
-	biomass_gross		REAL,
-	biomass_net			REAL,
-	carb_bole			REAL,
-	carb_foliage		REAL,
-	carb_branch			REAL,
-	carb_bark			REAL,
-	carb_tree			REAL,
-	carb_root			REAL,
-	defect				REAL
+-- plots_proc table
+create table if not exists plots_proc (
+	forest				text, 
+	stand				text,
+	cruise				text
+	plot				integer,
+	grow_yr				integer,
+	status				text,
+	dom_species			text,
+	codom_species		text,
+	stems				real,
+	ba					real,
+	qmd					real,
+	dom_ht				real,
+	ccf					real,
+	age					integer,
+	site_index			real,
+	vol_cb_gross		real,
+	vol_cb_net			real,
+	vol_bd_gross		real,
+	vol_bd_net			real,
+	wt_gross			real,
+	wt_net				real,
+	biomass_gross		real,
+	biomass_net			real,
+	carb_bole			real,
+	carb_foliage		real,
+	carb_branch			real,
+	carb_bark			real,
+	carb_tree			real,
+	carb_root			real,
+	defect				real
 );
 
 -- trees_proc
-CREATE TABLE IF NOT EXISTS trees_proc (
-	forest				TEXT, 
-	stand				TEXT,
-	cruise				TEXT,
-	plot				INTEGER,
-	tree				INTEGER,
-	grow_yr				INTEGER,
-	stems				REAL,		
-	status				TEXT,
-	species				TEXT,
-	dbh 				REAL,
-	ba 					REAL, 
-	tot_ht				REAL,
-	crb_ht				REAL,
-	age					INTEGER,
-	site_index			REAL,
-	vol_cb_gross		REAL,
-	vol_cb_net			REAL,
-	vol_bd_gross		REAL,
-	vol_bd_net			REAL,
-	wt_gross			REAL,
-	wt_net				REAL,
-	biomass_gross		REAL,
-	biomass_net			REAL,
-	carb_bole			REAL,
-	carb_foliage		REAL,
-	carb_branch			REAL,
-	carb_bark			REAL,
-	carb_tree			REAL,
-	carb_root			REAL,
-	defect				REAL
+create table if not exists trees_proc (
+	forest				text, 
+	stand				text,
+	cruise				text,
+	plot				integer,
+	tree				integer,
+	grow_yr				integer,
+	stems				real,		
+	status				text,
+	species				text,
+	dbh 				real,
+	ba 					real, 
+	tot_ht				real,
+	crb_ht				real,
+	age					integer,
+	site_index			real,
+	vol_cb_gross		real,
+	vol_cb_net			real,
+	vol_bd_gross		real,
+	vol_bd_net			real,
+	wt_gross			real,
+	wt_net				real,
+	biomass_gross		real,
+	biomass_net			real,
+	carb_bole			real,
+	carb_foliage		real,
+	carb_branch			real,
+	carb_bark			real,
+	carb_tree			real,
+	carb_root			real,
+	defect				real
 );
